@@ -16,7 +16,7 @@ multi-tenancy half of LO5.
 | Software | Version |
 |---|---|
 | OS | Kali Linux, kernel 6.18.12+kali-amd64, Debian 13 (trixie) base |
-| Docker | [ fill in: `docker info --format '{{.ServerVersion}}'` ] |
+| Docker | v29.3.1 |
 | kind | v0.32.0 |
 | kubectl | v1.36.0 |
 | Kubernetes (cluster) | v1.36.1 |
