@@ -1,0 +1,5 @@
+NAME                         REQUEST                                                                                                                   LIMIT                                   AGE
+resourcequota/dso202-quota   count/configmaps: 1/10, count/secrets: 0/10, count/services: 0/5, pods: 0/20, requests.cpu: 0/2, requests.memory: 0/2Gi   limits.cpu: 0/4, limits.memory: 0/4Gi   99m
+
+NAME                       CREATED AT
+limitrange/dso202-limits   2026-08-20T09:55:22Z
