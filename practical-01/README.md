@@ -1,4 +1,4 @@
-# DSO202 — Practical 1: Local Kubernetes Cluster with kind
+# DSO202 - Practical 1: Local Kubernetes Cluster with kind
 
 ## Purpose
 

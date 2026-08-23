@@ -10,18 +10,18 @@
 
 ## 1. Objective
  
-This practical set up a three-node local Kubernetes cluster using `kind`
-and deployed a static nginx web server through progressively more complete
-Kubernetes objects: a Namespace for multi-tenancy, a ResourceQuota and
-LimitRange to govern resource consumption, a bare Pod, a Deployment managing
-a ReplicaSet of three Pods, and two Services (ClusterIP and NodePort) to
-expose the application both inside and outside the cluster.
- 
-It covers descriptor sections Unit I 1.1 (Kubernetes architecture), 1.2.1–
-1.2.4 (Pods, ReplicaSets, Deployments, Services), 1.3.1–1.3.3 (kubectl
-operation and troubleshooting), 1.4.1 (workload terminology), and 1.5.1/1.5.3
-(namespaces, resource quotas, limit ranges) — meeting Learning Outcomes LO1,
-LO2, LO3, and the multi-tenancy half of LO5.
+A practical setup to deploy a three-node local Kubernetes cluster via
+`kind` was used to deploy a static nginx webserver utilizing gradually
+more complete Kubernetes resources like: namespace for multi-tenancy, a
+ResourceQuota and LimitRange to control the resource consumption, a simple
+Pod, a Deployment controlling a ReplicaSet of 3 pods, and two services,
+ClusterIP and NodePort, to make the service accessible both from within and
+from outside the cluster.
+  
+It covers from descriptors Unit I 1.1 (Kubernetes Architecture),
+1.2.1 - 1.2.4 (Pods, ReplicaSets, Deployments, Services), 1.3.1 - 1.3.3 (kubectl
+usage and troubleshooting), 1.4.1 (Workload Terminology), and 1.5.1/1.5.3 (Namespaces,
+resource quotas, limit ranges).
  
 ## 2. Environment
  
@@ -37,29 +37,25 @@ LO2, LO3, and the multi-tenancy half of LO5.
  
 ## 3. Procedure and Observations
  
-### Stage 0 — Prerequisites
+### Stage 0 - Prerequisites
 Docker, kind, and kubectl
  
-### Stage 1 — Creating the Three-Node Cluster
-Created the cluster from `cluster/kind-cluster.yaml` with `kind create
-cluster --config cluster/kind-cluster.yaml`. Confirmed the cluster and its
-three Docker containers with `kind get clusters` and `docker ps`, and
-confirmed kubectl was pointed at the new cluster with `kubectl config
-current-context`.
+### Stage 1 - Creating the Three-Node Cluster
+The cluster was created using `kind create cluster --config
+cluster/kind-cluster.yaml` and the cluster with three Docker containers were verified using `kind get clusters` and `docker ps` commands respectively. It was confirmed that kubectl is pointing to the cluster using `kubectl config current-context`.
  
 ![kind create cluster, get clusters, docker ps, current-context](../evidence/stage1-cluster-creation.png)
  
-### Stage 2 — Inspecting the Cluster
-Listed nodes, control-plane components, and namespaces as directed.
-Confirmed all three nodes (`control-plane`, `worker-node-1`,
-`worker-node-2`) reported `Ready`, and read `kubectl describe node
-worker-node-1` to inspect its labels, capacity, and allocatable resources.
+### Stage 2 – Inspecting the Cluster
+Nodes, control-plane, and namespaces have been listed as instructed.
+Verified that all the nodes – `control-plane`, `worker-node-1`,
+and `worker-node-2` were `Ready`, and inspected the labels,
+capacity, and allocatable resources using `kubectl describe node worker-node-1`.
  
 ![cluster-info, get nodes, get nodes -o wide, describe node](../evidence/stage2-cluster-inspect.png)
  
-Confirmed the control-plane components appeared once each on the
-control-plane node, while `kube-proxy` and `kindnet` appeared once per node
-as DaemonSets.
+Verified that the control plane was running one copy of each component,
+while `kube-proxy` and `kindnet` run one copy per node as DaemonSets.
  
 ![kubectl get pods -n kube-system -o wide](../evidence/stage2-kubesystem-pods.png)
  
@@ -68,16 +64,17 @@ cluster-scoped API resource types.
  
 ![kubectl logs kube-scheduler, kubectl api-resources](../evidence/stage2-scheduler-logs-apiresources.png)
  
-### Stage 3 — Namespace, ResourceQuota, LimitRange
-Created the namespace imperatively first for comparison (`dso202-scratch`,
-then deleted), then declaratively from `manifests/00-namespace.yaml`.
+### Stage 3 - Namespace, ResourceQuota, LimitRange
+The namespace was created imperatively at first to compare (`dso202-scratch`,
+after which it was deleted), and declaratively using `manifests/00-namespace.yaml`
+in compliance with the guide.
  
-**Discrepancy found:** the manifest defines the namespace as
-`dso202-practical-01`, but several guide commands reference
-`dso202-practical` (without the `-01` suffix). Setting the kubectl context
-default namespace per the guide's own Step 4 command, then running
-`kubectl describe resourcequota dso202-quota`, produced:
- 
+**Discrepancy found:** The namespace is defined as `dso202-practical-01`
+in the manifest, yet several commands from the guide reference it
+as `dso202-practical` (without `-01`). Setting the default namespace
+using the guide’s own command in step 4, and running
+`kubectl describe
+
 ```
 Error from server (NotFound): namespaces "dso202-practical" not found
 ```
@@ -91,14 +88,11 @@ kubectl config set-context --current --namespace=dso202-practical-01
  
 ![namespace create, dry-run, apply, set-context, quota apply, NotFound error, get namespaces](../evidence/stage3-namespace-mismatch-error.png)
  
-With the context corrected, the ResourceQuota and LimitRange were verified
-with `kubectl describe`. The LimitRange's default values were confirmed to
-be injected into a Pod that declared no resources of its own
-(`limitrange-check`), exactly as the guide describes.
- 
+Since the context was fixed, both the ResourceQuota and the LimitRange objects were checked using the `kubectl describe` command. The default values of the LimitRange were successfully inserted into a Pod which did not define any resources for itself (`limitrange-check`).
+
 ![describe resourcequota, describe limitrange, limitrange-check test](../evidence/stage3-quota-limitrange.png)
  
-### Stage 4 — Pods
+### Stage 4 - Pods
 Created a Pod both imperatively (`kubectl run web-imperative ...`) and
 declaratively (`manifests/02-pod-web.yaml`), and compared the two.
  
@@ -117,58 +111,57 @@ the manifest to `dso202-practical-01`.
  
 ![apply failing then succeeding after the fix](../evidence/stage4-pod-apply-fix.png)
  
-Worked through labels, annotations, and label selectors — including
-adding and removing a runtime label, and adding an annotation to confirm it
-cannot be selected on the way a label can.
+Label and annotation work including removal and addition of a runtime label,
+and addition of an annotation to ensure that it is not selectable like a label.
  
 ![get pods --show-labels, label selector tests, label add/remove, annotate](../evidence/stage4-labels-selectors-annotations.png)
  
-Also worked through `kubectl exec` (interactive shell and single command),
-`kubectl port-forward`, and `kubectl explain` for unfamiliar fields.
- 
+Went over `kubectl exec` commands (interactive shell and single command), `kubectl
+port-forward` and `kubectl explain` for unknown parameters.
+
 ![exec into web-pod, port-forward, explain resources](../evidence/stage4-exec-portforward-explain.png)
 
 ![explain livenessProbe --recursive](../evidence/stage4-explain-livenessprobe.png)
  
-### Stage 5 — Deployments
-Generated a Deployment manifest imperatively for comparison, then applied
-`manifests/03-deployment-web.yaml` and observed the Deployment → ReplicaSet
-→ Pod ownership chain.
+### Stage 5 - Deployments
+Created a manifest file of the Deployment object imperative approach for comparison
+purpose, and then created `manifests/03-deployment-web.yaml` and understood its ownership
+chain of Deployment -> ReplicaSet -> Pod.
  
 ![dry-run deployment yaml, apply, rollout status, ownership chain](../evidence/stage5-deployment-create-chain.png)
  
-Confirmed the ownership relationship directly via `ownerReferences`,
-confirmed the scheduler spread replicas across both worker nodes, and
-demonstrated self-healing by deleting one Pod and watching the ReplicaSet
-recreate a replacement within seconds. Also scaled imperatively to 5
-replicas as a comparison against the declared state of 3.
+Verified ownership directly through the `ownerReferences`
+field, verified that the scheduler distributed replicas to both worker
+nodes, and showed self-healing by deleting one Pod and observing the
+ReplicaSet create another replica almost immediately. Also scaled up
+imperatively to five replicas as a comparison against the stated number of three replicas.
  
 ![ownerReferences, node placement, delete pod, self-healing, scale to 5](../evidence/stage5-selfheal-scaling.png)
  
-Watched a rolling update from `nginx:1.30-alpine` to `nginx:1.31-alpine` in
-real time, observing the old ReplicaSet's Pods terminate only as new ones
-became ready.
+Watched a rolling update from `nginx:1.30-alpine` to `nginx:1.31-alpine`, seeing
+how the old ReplicaSet's Pods shut down only when new Pods came online.
  
 ![rollout watch: old ReplicaSet terminating as new one becomes ready](../evidence/stage5-rollout-watch.png)
  
-Read the revision history, inspected an earlier revision's image, and
-rolled back with `kubectl rollout undo`.
- 
+Checked the revision history, examined the image in an older revision, and rolled back using
+`kubectl rollout undo`.
+
 ![replicaset after update, rollout history, rollout undo](../evidence/stage5-rollout-history-rollback.png)
  
-Deliberately triggered a failed rollout using the non-existent image tag
-`nginx:9.99-does-not-exist`, and confirmed the three healthy replicas were
-never removed while the new Pod sat in `ImagePullBackOff` — direct evidence
-that `maxUnavailable: 0` prevented an outage during the stalled rollout.
-Rolled back to recover.
+Successfully forced a failed rollout using the non-existent image version `nginx:9.99-does-not-exist`, and observed how the three live replicas weren't
+deleted while the new Pod was stuck in `ImagePullBackOff` mode — proof
+that `maxUnavailable: 0` protected against downtime during the failed
+rollout. Rolled back.
+
  
 ![failed rollout: ImagePullBackOff alongside 3 healthy Pods, rollback](../evidence/stage5-failed-rollout.png)
  
-**Second filename discrepancy found:** the guide's Step 8 text (returning
-to the declared replica count) references `manifests/06-deployment-web.yaml`,
-which does not exist under that name — Listing 5 is saved as
-`03-deployment-web.yaml` per the companion file's Listing index. Corrected
-by using the actual filename.
+**Second filename discrepancy found:** : The guide's Step 8 text (back
+to the declared replica count) mentions `manifests/06-deployment-web.yaml`,
+which does not exist under that name — Listing 5 is called
+`03-deployment-web.yaml` according to Listing numbering of the companion
+file. Fixed using the correct filename.
+
  
 ```
 error: the path "manifests/06-deployment-web.yaml" does not exist
@@ -176,46 +169,49 @@ error: the path "manifests/06-deployment-web.yaml" does not exist
  
 ![06-deployment-web.yaml missing, corrected to 03-deployment-web.yaml](../evidence/stage5-filename-mismatch.png)
  
-Finally, confirmed the cluster matched the repository exactly with
-`kubectl diff`, which printed nothing before the confirmation echo.
+Finally, verified the exact match between the cluster and repository with
+`kubectl diff`, which output nothing before the confirmation echo.
  
 ![kubectl diff printing nothing, "cluster matches manifest"](../evidence/stage5-diff-matches.png)
  
-### Stage 6 — Services
+### Stage 6 - Services
 Applied the ClusterIP Service (`manifests/04-service-clusterip.yaml`) and
-the client Pod. The guide's Step 3 text references
-`manifests/09-pod-client.yaml`, which does not exist under that name —
-Listing 8 is saved as `06-pod-client.yaml`; corrected by using the actual
+the client Pod. The guide's Step 3 text mentions
+`manifests/09-pod-client.yaml`, which does not exist under that name -
+Listing 8 is called `06-pod-client.yaml`; fixed using the correct
 filename.
  
 ![09-pod-client.yaml missing, corrected to 06-pod-client.yaml](../evidence/stage6-filename-mismatch.png)
  
-Confirmed the Service answered HTTP requests correctly from inside the
-cluster via `client-pod`.
+Verified the Service could respond to HTTP requests properly within the
+cluster through `client-pod`.
  
 Two genuine problems were found and resolved in this stage.
  
-**1. A standalone Pod was polluting the Service's endpoints.** The
-load-balancing test (writing a distinct hostname to each Pod and sending
-nine requests) returned results split across four distinct Pod names
-instead of three — one of them was `web-pod`, the standalone Pod from
+**1. A Pod running separately was interfering with the Service's
+endpoints.** The load balancing test (writing a different hostname to each
+Pod and making nine requests) resulted in a split into four different Pod
+names, instead of three — one of them was `web-pod`, the separate Pod from
 Stage 4, not a Deployment replica. Cause: `manifests/02-pod-web.yaml` and
-`manifests/03-deployment-web.yaml` both label their Pods `app: web,
-tier: frontend` (visible directly in the Stage 4 labels screenshot above),
-and the ClusterIP Service selects on exactly those two keys with no way to
-distinguish an unmanaged Pod from a Deployment-owned replica. Resolved by
-deleting `web-pod`, since its teaching purpose from Stage 4 was already
-fulfilled. Re-ran the load-balancing test afterward and confirmed a clean,
-even split across exactly the three Deployment replicas.
+`manifests/03-deployment-web.yaml` use identical Pod labeling: `app:
+web, tier: frontend` (as can be seen from the screenshot with Stage 4
+labels shown above), while the ClusterIP Service filters by these two
+criteria only, leaving no way to distinguish an unmanaged Pod from the
+Deployment replica. Fixed by deleting `web-pod`, since its educational role
+in Stage 4 was completed. The load balancing test was performed again after
+this action and verified a clear, even distribution across three Deployment
+Pods.
  
-![clean load-balancing result across exactly 3 Deployment Pods](../evidence/stage6-clean-loadbalance-final.png)
+![clean load balancing results across exactly 3 Deployment Pods](../evidence/stage6-clean-loadbalance-final.png)
  
-**2. Missing `readinessProbe`.** Testing readiness-based traffic gating (by
-deleting `index.html` from one Deployment Pod) initially showed no change —
-the Pod continued to report `1/1 Running` and remained fully in the
-Service's EndpointSlice, because `manifests/03-deployment-web.yaml` as
-distributed had no `readinessProbe` or `livenessProbe` at all, despite the
-guide's narrative describing readiness-based removal. Added:
+**2. Missing `readinessProbe`.** The test of readiness-based traffic
+filtering (by deleting `index.html` from one Deployment Pod) produced no
+effect initially — the Pod kept on reporting `1/1 Running` and still fully
+present in the Service's EndpointSlice, because `manifests/03-deployment-web.yaml`
+distributed with the assignment has neither `readinessProbe` nor
+`livenessProbe`, contrary to the description in the guide's narrative
+regarding readiness-based Pod removal. Added: 
+
  
 ```yaml
 readinessProbe:
@@ -232,32 +228,35 @@ livenessProbe:
   periodSeconds: 10
 ```
  
-Re-applying the Deployment triggered a new rollout (a changed Pod template
-produces a new template hash, and therefore a new ReplicaSet). Repeating
-the readiness test on the new Pods showed the target Pod correctly drop to
-`0/1 READY`. Reading the EndpointSlice's per-address `conditions` (rather
-than just the address count in `-o wide`) showed the true mechanism: the
-current `discovery.k8s.io/v1` API retains the unready Pod's address in the
-list but marks it `ready: false`, rather than removing the address outright
-as in the older Endpoints API the guide's sample output was written
-against. A repeat load-balancing test confirmed the unready Pod received
-zero of nine requests — traffic was correctly excluded despite the address
-still being listed. Restored the file and confirmed all three addresses
-returned to `ready: true`. The same evidence run also demonstrated the
-guide's broken-selector example (`broken-service`), which produced an empty
-EndpointSlice exactly as expected.
+Using the Deployment again triggered a redeployment (a change in Pod template
+results in a change in the template hash, and therefore in a new
+ReplicaSet). Testing the readiness of the new Pods revealed that the target
+Pod was now dropped to `0/1 READY`. Looking into the per-address
+`conditions` of the EndpointSlice (instead of simply looking at the number
+of addresses in `-o wide`) revealed the truth behind this behavior: the
+current `discovery.k8s.io/v1` API keeps the unready Pod's address in the
+list, but marks it as `ready: false` (unlike in the older Endpoints API
+which the guide's sample output is based upon, where the unready Pod's
+address is simply removed). 
+
+Testing for load balancing once more revealed
+that the unready Pod did indeed receive none out of nine requests - traffic
+was correctly excluded despite the presence of the address. After restoring
+the file, it was confirmed that all three addresses now have `ready: true`.
+The very same set of tests proved the guide's broken selector example,
+`broken-service`, by producing an empty EndpointSlice exactly as it should
+have done.
  
 ![readiness test: ready=false, load-balance excluding the broken Pod, restore, broken-service demo](../evidence/stage6-readiness-gating.png)
  
-Both the NodePort Service (`manifests/05-service-nodeport.yaml`) and a
-temporary `lb-demo` Service were also tested: `curl http://localhost:30080`
-from the host and from inside a worker container both reached the
-application correctly, and a `LoadBalancer`-type Service correctly stayed
-`<pending>`, since `kind` has no cloud provider to fulfil the request.
+A NodePort service (`manifests/05-service-nodeport.yaml`) and a temporary
+`lb-demo` Service were also tested: `curl http://localhost:30080` from the
+host machine and from a worker container both accessed the application
+correctly, while the `LoadBalancer`-type Service remained `<pending>` (since
+there is no cloud provider in `kind`).
  
-![NodePort apply, curl from host, curl from worker container, LoadBalancer pending](../evidence/stage6-nodeport-loadbalancer.png)
- 
-### Stage 7 — Cleanup
+
+### Stage 7 - Cleanup
 Captured final evidence to text files (`evidence/final-state-all.txt`,
 `evidence/final-state-nodes.txt`, `evidence/final-state-events.txt`) via
 `kubectl get all -o wide`, `resourcequota,limitrange,endpointslice -o wide`,
@@ -283,68 +282,44 @@ confirmed with `kind get clusters` that no clusters remained.
 
 ## 5. Reflection
  
-**What was difficult.** The hardest part of this practical was not any
-single Kubernetes concept in isolation, but the discipline of not trusting
-the guide's text at face value. The guide and its companion manifest file
-disagreed with each other in several places — a namespace name, and three
-separate manifest filenames — and the only way to catch these before they
-wasted time was to treat the companion file's Listing index as the single
-source of truth and check every command against it before running it. That
-habit paid off directly: the namespace-mismatch errors (Stages 3 and 4) and
-the filename errors (Stages 5 and 6) were each resolved quickly once the
-checking habit was in place, because the diagnostic step was always the
-same — read the error message literally, then verify what actually exists
-in the cluster or repository rather than assuming the guide's prose was
-correct.
- 
-**Which error was met and how it was diagnosed, and why it mattered.** The
-most significant finding of the practical was the missing `readinessProbe`
-in `manifests/03-deployment-web.yaml`. What made it different from the
-naming mismatches is that it was not a typo — it was a real gap between
-what the guide's Stage 6 narrative claimed would happen (a Pod disappearing
-from the Service's routable set once its readiness check fails) and what
-the distributed manifest actually made possible (nothing, because no
-readiness check existed to fail). It surfaced as a negative result: after
-deleting `index.html` from a running Pod, nothing changed — the Pod stayed
-`1/1 Running` and kept receiving traffic indefinitely. A negative result
-like that is easy to misread as "I did the step wrong," so the diagnosis
-had to rule that out deliberately before concluding the manifest itself was
-incomplete, and only then was a `readinessProbe`/`livenessProbe` pair
-written and applied.
- 
-Fixing it produced a second, unplanned finding that was arguably more
-valuable than the first: once a working `readinessProbe` was added and the
-Pod correctly failed it, the EndpointSlice still listed the Pod's address
-in the summary view, which looked at first like the fix hadn't worked.
-Reading the object's per-address `conditions` directly showed the true
-behaviour — the address is retained but tagged `ready: false` — which
-differs from the address-removal behaviour implied by the guide's
-older-style sample output. This meant the correct way to verify the fix
-was not "count the addresses" but "read the `ready` condition on each
-address, and confirm the routing behaviour directly with a load test,"
-which is a more accurate mental model of how Kubernetes Services actually
-work than the guide's simplified description, and one that should transfer
-directly to later practicals involving Services, readiness, and rolling
-updates.
- 
-**What would be done differently.** The `web-pod` / Deployment label
-overlap in Stage 6 could have been anticipated rather than discovered by
-surprise. `web-pod` (Stage 4) and the Deployment's Pod template (Stage 5)
-share identical `app: web, tier: frontend` labels by construction — nothing
-in either manifest distinguishes "a standalone teaching Pod" from "a
-Deployment-managed replica," so any Service selecting on those two keys was
-always going to catch both. Recognising this before starting Stage 6 —
-simply by re-reading the label sections of Listings 4 and 5 side by side —
-would have avoided a confusing intermediate load-balancing result. More
-generally, the lesson is that a label selector's correctness should be
-checked against every Pod in the namespace that could possibly match it,
-not just the Pods it was written with in mind.
- 
+**What was difficult.** The most difficult aspect of this practical was not
+any particular concept in Kubernetes, but the necessity not to believe what
+the guide says at face value. The guide and its accompanying manifest file
+conflict about a few details - namespace name and three manifest files' -
+and the only way to identify these conflicts early on was to rely solely on
+the index of files in the manifest file, and run all commands by
+verifying them against the contents of that file first. It paid off
+directly: the namespace-mismatch (Stages 3 and 4) and the manifest filename
+errors (Stages 5 and 6) were fixed immediately due to the checking
+approach, because the diagnostics for both classes of errors were simple
+every time: read the exact error message, and check whether something
+actually exists in the Kubernetes cluster/repository in contradiction with
+the error message.
+
+**Which error was met and how it was diagnosed, and why it mattered.**
+ The
+most important outcome of the practical work was a discovery of the lack
+of the `readinessProbe` in `manifests/03-deployment-web.yaml`. The thing
+that made it stand out among naming errors is that it was not a typo; it
+was an actual difference between the claims of the guide in Stage 6 and
+what the manifest could make actually happen (no pods could disappear from
+the service's routable set upon failing the readiness probe since there were no probes at all). It was detected through a negative test result -
+deleting `index.html` did nothing: Pod continued working and receiving
+traffic after being put in state where readiness check should've failed. A
+negative result like that can easily be mistaken for "I made a mistake,
+doing this step," which is why a deliberate effort had to be made to
+exclude this hypothesis and realize that the manifest was actually
+incomplete, and only then the `readinessProbe` and `livenessProbe` were added to it.
+
+The fix led to a second, unexpected discovery, which was potentially even more valuable than the first one: after implementing a working `readinessProbe` and ensuring the Pod fails the probe, the EndpointSlice shows the address of this Pod in its overview, suggesting that the fix didn't work. However, viewing the conditions for the Pod's IP address directly demonstrates the real state of affairs: the address is included in the EndpointSlice but marked `ready: false`. This is inconsistent with the deletion of address in the older sample output used by the guide. It means that the right way to test whether the fix works is not to "count the addresses" but to "check the `ready` condition on each IP address in the EndpointSlice, and conduct a load balancing test", which is more accurate reflection of Kubernetes Services' functionality and should translate seamlessly into future practicals with Services, readiness checks and rolling updates.
+  
+**What would be done differently.** The overlap between `web-pod` / Deployment labels in Stage 6 was an easily predictable error. The labels used for `web-pod` (Stage 4) and the Pod template for the Deployment (Stage 5) are exactly the same (`app: web, tier: frontend`) by definition: there are no distinguishing factors anywhere in either manifest, and any Service targeting those labels will always include both of them. This was clear upon re-reading listings 4 and 5 side by side and could have been predicted before attempting Stage 6.
+
  
 ## 6. References
- 
+
 - DSO202 Practical 1 Guide (HackMD, sarojsanyasi)
 - DSO202 Practical 1 Companion Manifest File (HackMD, sarojsanyasi)
-- Kubernetes official documentation — EndpointSlices 
-- Kubernetes official documentation — Configure Liveness, Readiness and Startup Probes 
-- kind documentation — https://kind.sigs.k8s.io/ 
+- Kubernetes official documentation - EndpointSlices 
+- Kubernetes official documentation - Configure Liveness, Readiness and Startup Probes 
+- kind documentation - https://kind.sigs.k8s.io/
