@@ -18,10 +18,11 @@ Pod, a Deployment controlling a ReplicaSet of 3 pods, and two services,
 ClusterIP and NodePort, to make the service accessible both from within and
 from outside the cluster.
   
-It covers from descriptors Unit I 1.1 (Kubernetes Architecture),
-1.2.1 - 1.2.4 (Pods, ReplicaSets, Deployments, Services), 1.3.1 - 1.3.3 (kubectl
-usage and troubleshooting), 1.4.1 (Workload Terminology), and 1.5.1/1.5.3 (Namespaces,
-resource quotas, limit ranges).
+
+This is related to Unit I 1.1 (Kubernetes architecture), 1.2.1 to 1.2.4
+(Pods, ReplicaSets, Deployments, Services), 1.3.1 to 1.3.3 (kubectl
+operation and troubleshooting), 1.4.1, and 1.5.1/1.5.3 (Namespaces,
+Resource Quotas, and Limit Ranges).
  
 ## 2. Environment
  
@@ -46,7 +47,7 @@ cluster/kind-cluster.yaml` and the cluster with three Docker containers were ver
  
 ![kind create cluster, get clusters, docker ps, current-context](../evidence/stage1-cluster-creation.png)
  
-### Stage 2 – Inspecting the Cluster
+### Stage 2 - Inspecting the Cluster
 Nodes, control-plane, and namespaces have been listed as instructed.
 Verified that all the nodes – `control-plane`, `worker-node-1`,
 and `worker-node-2` were `Ready`, and inspected the labels,
@@ -188,29 +189,11 @@ cluster through `client-pod`.
  
 Two genuine problems were found and resolved in this stage.
  
-**1. A Pod running separately was interfering with the Service's
-endpoints.** The load balancing test (writing a different hostname to each
-Pod and making nine requests) resulted in a split into four different Pod
-names, instead of three — one of them was `web-pod`, the separate Pod from
-Stage 4, not a Deployment replica. Cause: `manifests/02-pod-web.yaml` and
-`manifests/03-deployment-web.yaml` use identical Pod labeling: `app:
-web, tier: frontend` (as can be seen from the screenshot with Stage 4
-labels shown above), while the ClusterIP Service filters by these two
-criteria only, leaving no way to distinguish an unmanaged Pod from the
-Deployment replica. Fixed by deleting `web-pod`, since its educational role
-in Stage 4 was completed. The load balancing test was performed again after
-this action and verified a clear, even distribution across three Deployment
-Pods.
+Firstly, there was an extra Pod interfering with traffic on the Service. After entering a unique hostname in each of the Pods and running nine requests via the Service, I received four different Pod hostnames, but only three should have appeared. The fourth was web-pod, which was the extra Pod from Stage 4 – not one of the replicas from the Deployment. It turns out that manifests/02-pod-web.yaml and manifests/03-deployment-web.yaml use the same labels (app: web, tier: frontend), and the selector on the Service looks for these two labels without any way to differentiate between an extra standalone Pod and a replica Pod. I removed the extra Pod because it had served its purpose back in Stage 4, and re-ran the tests.
  
 ![clean load balancing results across exactly 3 Deployment Pods](../evidence/stage6-clean-loadbalance-final.png)
  
-**2. Missing `readinessProbe`.** The test of readiness-based traffic
-filtering (by deleting `index.html` from one Deployment Pod) produced no
-effect initially — the Pod kept on reporting `1/1 Running` and still fully
-present in the Service's EndpointSlice, because `manifests/03-deployment-web.yaml`
-distributed with the assignment has neither `readinessProbe` nor
-`livenessProbe`, contrary to the description in the guide's narrative
-regarding readiness-based Pod removal. Added: 
+Second - no readinessProbe at all. I tried checking readiness gate functionality by deleting index.html off one of the Deployment Pods and waiting for it to be removed from the Service. It did not happen — it remained 1/1 Running and received traffic. As it turned out, manifests/03-deployment-web.yaml, unlike described in the guide at this point, has neither readinessProbe nor livenessProbe configured in it. I added one: 
 
  
 ```yaml
@@ -278,7 +261,7 @@ confirmed with `kind get clusters` that no clusters remained.
  
 ![kind delete cluster, kind get clusters showing none remain](../evidence/stage7-cluster-deleted.png)
  
-## 4. Analysis
+<!-- ## 4. Analysis -->
 
 ## 5. Reflection
  
