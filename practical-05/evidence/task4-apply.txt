@@ -1,0 +1,4 @@
+namespace/webapp-dev created
+configmap/web-content-2ttg7dbdck created
+service/webapp created
+deployment.apps/webapp created

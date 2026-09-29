@@ -1,0 +1,94 @@
+--- evidence/task3-dev-rendered.yaml	2026-09-28 14:22:16.667203378 +0600
++++ evidence/task3-prod-rendered.yaml	2026-09-28 14:22:17.139217285 +0600
+@@ -2,36 +2,36 @@
+ kind: Namespace
+ metadata:
+   labels:
+-    environment: dev
+-  name: webapp-dev
++    environment: prod
++  name: webapp-prod
+ ---
+ apiVersion: v1
+ data:
+   index.html: |
+     <!DOCTYPE html>
+     <html lang="en">
+-    <head><meta charset="utf-8"><title>webapp - dev</title></head>
++    <head><meta charset="utf-8"><title>webapp - prod</title></head>
+     <body>
+-      <h1>DEV — Hello from Development</h1>
+-      <p>Environment: development</p>
++      <h1>PROD — Hello from Production</h1>
++      <p>Environment: production</p>
+     </body>
+     </html>
+ kind: ConfigMap
+ metadata:
+   labels:
+     app.kubernetes.io/name: webapp
+-    environment: dev
+-  name: web-content-2ttg7dbdck
+-  namespace: webapp-dev
++    environment: prod
++  name: web-content-59m5thhc9g
++  namespace: webapp-prod
+ ---
+ apiVersion: v1
+ kind: Service
+ metadata:
+   labels:
+     app.kubernetes.io/name: webapp
+-    environment: dev
++    environment: prod
+   name: webapp
+-  namespace: webapp-dev
++  namespace: webapp-prod
+ spec:
+   ports:
+   - name: http
+@@ -46,11 +46,11 @@
+ metadata:
+   labels:
+     app.kubernetes.io/name: webapp
+-    environment: dev
++    environment: prod
+   name: webapp
+-  namespace: webapp-dev
++  namespace: webapp-prod
+ spec:
+-  replicas: 1
++  replicas: 3
+   selector:
+     matchLabels:
+       app.kubernetes.io/name: webapp
+@@ -60,23 +60,23 @@
+         app.kubernetes.io/name: webapp
+     spec:
+       containers:
+-      - image: nginx:1.27-alpine
++      - image: nginx:1.27.4-alpine
+         name: webapp
+         ports:
+         - containerPort: 80
+           name: http
+         resources:
+           limits:
+-            cpu: 100m
+-            memory: 128Mi
++            cpu: 500m
++            memory: 512Mi
+           requests:
+-            cpu: 50m
+-            memory: 64Mi
++            cpu: 250m
++            memory: 256Mi
+         volumeMounts:
+         - mountPath: /usr/share/nginx/html
+           name: web-content
+           readOnly: true
+       volumes:
+       - configMap:
+-          name: web-content-2ttg7dbdck
++          name: web-content-59m5thhc9g
+         name: web-content

@@ -1,0 +1,34 @@
+NAMESPACE        NAME                          READY   STATUS    RESTARTS   AGE     IP            NODE                              NOMINATED NODE   READINESS GATES
+webapp-dev       pod/webapp-56c5f6d9f-zzk94    1/1     Running   0          23m     10.244.0.10   dso202-assignment-control-plane   <none>           <none>
+webapp-prod      pod/webapp-8595f5b698-2z2qd   1/1     Running   0          16m     10.244.0.14   dso202-assignment-control-plane   <none>           <none>
+webapp-prod      pod/webapp-8595f5b698-6rrc4   1/1     Running   0          16m     10.244.0.15   dso202-assignment-control-plane   <none>           <none>
+webapp-prod      pod/webapp-8595f5b698-sh8fj   1/1     Running   0          16m     10.244.0.13   dso202-assignment-control-plane   <none>           <none>
+webapp-qa        pod/webapp-6b65975b8c-8r6td   1/1     Running   0          3m32s   10.244.0.17   dso202-assignment-control-plane   <none>           <none>
+webapp-qa        pod/webapp-6b65975b8c-d798q   1/1     Running   0          3m32s   10.244.0.16   dso202-assignment-control-plane   <none>           <none>
+webapp-staging   pod/webapp-75cc9c5f4d-xmtd7   1/1     Running   0          16m     10.244.0.12   dso202-assignment-control-plane   <none>           <none>
+webapp-staging   pod/webapp-75cc9c5f4d-z5mfx   1/1     Running   0          16m     10.244.0.11   dso202-assignment-control-plane   <none>           <none>
+
+NAMESPACE        NAME             TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE     SELECTOR
+webapp-dev       service/webapp   ClusterIP   10.96.180.45    <none>        80/TCP    37m     app.kubernetes.io/name=webapp
+webapp-prod      service/webapp   ClusterIP   10.96.193.88    <none>        80/TCP    16m     app.kubernetes.io/name=webapp
+webapp-qa        service/webapp   ClusterIP   10.96.193.255   <none>        80/TCP    3m32s   app.kubernetes.io/name=webapp
+webapp-staging   service/webapp   ClusterIP   10.96.84.247    <none>        80/TCP    16m     app.kubernetes.io/name=webapp
+
+NAMESPACE        NAME                     READY   UP-TO-DATE   AVAILABLE   AGE     CONTAINERS   IMAGES                SELECTOR
+webapp-dev       deployment.apps/webapp   1/1     1            1           37m     webapp       nginx:1.27-alpine     app.kubernetes.io/name=webapp
+webapp-prod      deployment.apps/webapp   3/3     3            3           16m     webapp       nginx:1.27.4-alpine   app.kubernetes.io/name=webapp
+webapp-qa        deployment.apps/webapp   2/2     2            2           3m32s   webapp       nginx:1.27-alpine     app.kubernetes.io/name=webapp
+webapp-staging   deployment.apps/webapp   2/2     2            2           16m     webapp       nginx:1.27-alpine     app.kubernetes.io/name=webapp
+
+NAMESPACE        NAME                                DESIRED   CURRENT   READY   AGE     CONTAINERS   IMAGES                SELECTOR
+webapp-dev       replicaset.apps/webapp-56c5f6d9f    1         1         1       23m     webapp       nginx:1.27-alpine     app.kubernetes.io/name=webapp,pod-template-hash=56c5f6d9f
+webapp-dev       replicaset.apps/webapp-5f6ff97d7d   0         0         0       37m     webapp       nginx:1.27-alpine     app.kubernetes.io/name=webapp,pod-template-hash=5f6ff97d7d
+webapp-prod      replicaset.apps/webapp-8595f5b698   3         3         3       16m     webapp       nginx:1.27.4-alpine   app.kubernetes.io/name=webapp,pod-template-hash=8595f5b698
+webapp-qa        replicaset.apps/webapp-6b65975b8c   2         2         2       3m32s   webapp       nginx:1.27-alpine     app.kubernetes.io/name=webapp,pod-template-hash=6b65975b8c
+webapp-staging   replicaset.apps/webapp-75cc9c5f4d   2         2         2       16m     webapp       nginx:1.27-alpine     app.kubernetes.io/name=webapp,pod-template-hash=75cc9c5f4d
+NAMESPACE        NAME                     DATA   AGE
+webapp-dev       web-content-2ttg7dbdck   1      37m
+webapp-dev       web-content-844tgb64hf   1      23m
+webapp-prod      web-content-59m5thhc9g   1      16m
+webapp-qa        web-content-4cbfkkb8f2   1      3m33s
+webapp-staging   web-content-tgm6t5mf9k   1      16m
