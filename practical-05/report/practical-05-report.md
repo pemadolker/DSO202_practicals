@@ -1,6 +1,5 @@
 # DSO202 Practical 5: Environment-Specific Configuration with Kustomize on kind
 
-
 ## 1. Objective
 
 The aim of this practical was to run the same small nginx web app in three environments (dev, staging and prod) without keeping three copies of the Deployment and the Service. Kustomize does this with one base that holds the shared resources, and one overlay per environment that only holds what is different.
@@ -30,7 +29,29 @@ The cluster was already 5 days old when I started, so I reused it instead of cre
 
 I ran `kubectl cluster-info`, `kubectl get nodes -o wide` and `kubectl version --client -o yaml`. I also checked the node taints with `kubectl describe node dso202-assignment-control-plane | grep -i taints` and listed the namespaces with `kubectl get ns` to make sure no `webapp-*` namespace existed yet.
 
-![Pre-flight checks](../evidence/task0-preflight.png)
+```text
+Kubernetes control plane is running at https://127.0.0.1:38035
+CoreDNS is running at https://127.0.0.1:38035/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
+
+NAME                              STATUS   ROLES           AGE     VERSION   INTERNAL-IP   OS-IMAGE                       CONTAINER-RUNTIME
+dso202-assignment-control-plane   Ready    control-plane   5d13h   v1.36.1   172.20.0.2    Debian GNU/Linux 13 (trixie)   containerd://2.3.1
+
+clientVersion:
+  gitVersion: v1.36.0
+  platform: linux/amd64
+kustomizeVersion: v5.8.1
+
+Taints:             <none>
+
+NAME                   STATUS   AGE
+default                Active   5d13h
+dso202-assignment-01   Active   5d13h
+ingress-nginx          Active   3d4h
+kube-node-lease        Active   5d13h
+kube-public            Active   5d13h
+kube-system            Active   5d13h
+local-path-storage     Active   5d13h
+```
 
 The output shows that kubectl reaches the kind cluster on `127.0.0.1:38035`, the node is `Ready`, and `kustomizeVersion: v5.8.1` is printed, so `-k` and `kubectl kustomize` are available. The taints line was `<none>` and there was no `webapp-*` namespace.
 
@@ -156,7 +177,16 @@ The patch, the render and the live Deployment all show requests of 250m CPU and 
 
 I created `overlays/qa/` with four files and no copy of `deployment.yaml` or `service.yaml`. I started from the dev files and changed the namespace to `webapp-qa`, the label to `environment: qa` and the replicas to 2. The page in `index.html` is my own QA text.
 
-![QA files](../evidence/task9-qa-files.png)
+```text
+$ tree examples/webapp/overlays/qa
+examples/webapp/overlays/qa
+├── index.html
+├── kustomization.yaml
+├── namespace.yaml
+└── patch-annotation.yaml
+
+1 directory, 4 files
+```
 
 `overlays/qa/kustomization.yaml`:
 
@@ -218,6 +248,33 @@ I deleted the four environments with `kubectl delete -k` for dev, staging, prod 
 
 There is no `webapp-*` namespace and no `web-content` ConfigMap left on the cluster. The other namespaces are still there.
 
+### Challenge Extension: namePrefix in a sandbox overlay (optional)
+
+I created `overlays/sandbox/`, using only the base and `namePrefix: sandbox-`, with nothing else added:
+
+    resources:
+      - ../../base
+    namePrefix: sandbox-
+
+Before rendering, I predicted whether four names/references would change. I got one of the four right at first: I said `volumes[].configMap.name` would change, because it points at another object. I was wrong on the other three — I thought the ConfigMap's own name would stay the same, and I thought `volumeMounts[].name` and `volumes[].name` would both change too.
+
+I then ran `kubectl kustomize examples/webapp/overlays/sandbox`:
+
+![alt text](../evidence/task-sandbox-render.png)
+
+
+
+Comparing it with my prediction:
+
+    ConfigMap name:            web-content-692t5kf7dh  → sandbox-web-content-692t5kf7dh
+    Service name:               webapp                  → sandbox-webapp
+    Deployment name:            webapp                  → sandbox-webapp
+    volumes[].configMap.name:   web-content-692t5kf7dh  → sandbox-web-content-692t5kf7dh
+    volumeMounts[].name:        web-content             → web-content   (unchanged)
+    volumes[].name:             web-content             → web-content   (unchanged)
+
+The pattern I found is that `namePrefix` renames an object's own name, and Kustomize also rewrites any field elsewhere in the output that references that object by name — the same reference-aware behaviour I saw with the ConfigMap hash in Task 6. It does not touch `volumeMounts[].name` or `volumes[].name`, because those are not names of Kubernetes objects; they are local keys used only to link a mount to a volume inside one Pod spec, so there is nothing outside that Pod spec for Kustomize to keep in sync. That is also why I predicted those two wrong the first time — I was thinking of them as names Kustomize tracks, when they are really just local labels.
+
 ### Evidence index
 
 | Evidence asked in the lab | File |
@@ -231,38 +288,7 @@ There is no `webapp-*` namespace and no `web-content` ConfigMap left on the clus
 | QA overlay files | `examples/webapp/overlays/qa/`, `evidence/task9-qa-files.png` |
 | Strategic merge vs JSON 6902 | section 4 |
 | Reflection | section 5 |
-
-
-## Challenge Extension: namePrefix in a sandbox overlay
-
-I created `overlays/sandbox/`, using only the base and `namePrefix: sandbox-`,
-with nothing else added:
-
-    resources:
-      - ../../base
-    namePrefix: sandbox-
-
-Before rendering, I predicted which names would change  and it did change accordingly.
-
-I then ran `kubectl kustomize examples/webapp/overlays/sandbox` and compared
-it with my prediction:
-
-    ConfigMap name:            web-content-692t5kf7dh  → sandbox-web-content-692t5kf7dh
-    Service name:               webapp                  → sandbox-webapp
-    Deployment name:            webapp                  → sandbox-webapp
-    volumes[].configMap.name:   web-content-692t5kf7dh  → sandbox-web-content-692t5kf7dh
-    volumeMounts[].name:        web-content             → web-content   (unchanged)
-    volumes[].name:             web-content             → web-content   (unchanged)
-
-
-The pattern I found is that `namePrefix` renames an object's own name, and
-Kustomize also rewrites any field elsewhere in the output that references
-that object by name - the same reference-aware behaviour I saw with the
-ConfigMap hash in Task 6. It does not touch `volumeMounts[].name` or
-`volumes[].name`, because those are not names of Kubernetes objects; they are
-local keys used only to link a mount to a volume inside one Pod spec, so
-there is nothing outside that Pod spec for Kustomize to keep in sync.
-
+| Challenge extension (optional) | rendered output quoted inline in that section |
 
 ## 4. Analysis
 
